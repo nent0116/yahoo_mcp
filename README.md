@@ -53,6 +53,35 @@ yahoo_ads:
   YAHOO_ADS_BASE_ACCOUNT_ID: "..."
 ```
 
+### 環境変数の取得方法
+
+LINEヤフー広告 API を利用するには、事前に API 利用申請とアプリケーション登録が必要です。
+API 管理コンソールの操作には、API 管理ツールの管理者権限を持つビジネス ID が必要です。
+
+- `YAHOO_ADS_CLIENT_ID`
+  - LY Ads API Management Console でアプリケーションを追加すると発行されます。
+  - 登録済みアプリケーションの一覧に `Client ID` として表示されます。
+
+- `YAHOO_ADS_CLIENT_SECRET`
+  - `YAHOO_ADS_CLIENT_ID` と同じ登録済みアプリケーションで確認します。
+  - アプリケーション一覧の `View` から `Client secret` を表示できます。
+  - パスワード相当の値なので、第三者に共有しないでください。
+
+- `YAHOO_ADS_REFRESH_TOKEN`
+  - OAuth2 認可コードフローで取得します。
+  - まず `get_oauth_authorization_url` ツールで認可 URL を作成し、広告アカウント権限を持つビジネス ID でログインしてアプリケーションを承認します。
+  - 承認後に取得した認可コードを `exchange_authorization_code` ツールへ渡すと、レスポンスに `refresh_token` が含まれます。
+  - `access_token` は通常 1 時間で期限切れになりますが、`refresh_token` を設定しておけば再取得できます。
+
+- `YAHOO_ADS_BASE_ACCOUNT_ID`
+  - API リクエストヘッダー `x-z-base-account-id` に指定するアカウント ID です。
+  - `list_base_accounts` ツールで、認可したビジネス ID が直接権限を持つ MCC アカウントまたは広告アカウントの一覧を取得できます。
+  - 広告管理ツール上でもアカウント ID を確認できます。
+  - 配下アカウントを広く扱う場合はルート MCC の ID、単一広告アカウントだけを扱う場合は対象広告アカウントの ID を指定します。
+
+- `YAHOO_ADS_API_VERSION`
+  - 任意項目です。未指定時は `v19` を使用します。
+
 ## 起動
 
 ```bash
@@ -122,5 +151,9 @@ MCP クライアント設定例:
 
 - Google Ads MCP Server: https://github.com/google-marketing-solutions/google_ads_mcp
 - LY Ads API Startup Guide: https://ads-developers.yahoo.co.jp/en/ads-api/startup-guide/api-call.html
+- LY Ads API Before you start: https://ads-developers.yahoo.co.jp/en/ads-api/startup-guide/before_you_start.html
+- LY Ads API Add Application: https://ads-developers.yahoo.co.jp/en/ads-api/startup-guide/app-registration.html
+- LY Ads API OAuth2.0: https://ads-developers.yahoo.co.jp/en/ads-api/developers-guide/oauth.html
+- LINEヤフー広告 アカウントIDとは: https://ads-help.yahoo-net.jp/s/article/H000044734?language=ja
 - Search Ads OpenAPI: https://github.com/yahoojp-marketing/ads-search-api-documents
 - Display Ads OpenAPI: https://github.com/yahoojp-marketing/ads-display-api-documents
