@@ -1,0 +1,60 @@
+[project]
+name = "yahoo-ads-mcp"
+version = "0.1.0"
+description = "MCP server for LY/Yahoo! JAPAN Ads API."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+  { name = "nent0116", email = "application@nent.co.jp" },
+]
+license = "Apache-2.0"
+keywords = ["yahoo-ads", "ly-ads", "mcp", "advertising"]
+dependencies = [
+  "fastmcp>=3.4.2",
+  "httpx[http2]>=0.28.1",
+  "mcp>=1.27.0",
+  "pydantic>=2.11.0",
+  "python-dotenv>=1.0.1",
+]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3.2",
+  "pytest-asyncio>=1.1.0",
+  "pytest-cov>=7.0.0",
+  "respx>=0.22.0",
+  "ruff>=0.8.0",
+]
+
+[project.urls]
+"Reference Implementation" = "https://github.com/google-marketing-solutions/google_ads_mcp"
+"LY Ads API" = "https://ads-developers.yahoo.co.jp/en/ads-api/"
+"Search Ads OpenAPI" = "https://github.com/yahoojp-marketing/ads-search-api-documents"
+"Display Ads OpenAPI" = "https://github.com/yahoojp-marketing/ads-display-api-documents"
+
+[project.scripts]
+run-mcp-server = "yahoo_ads_mcp.server:main"
+run-mcp-server-stdio = "yahoo_ads_mcp.stdio:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"yahoo_ads_mcp" = ["**/*.md"]
