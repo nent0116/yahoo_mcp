@@ -66,6 +66,26 @@ def test_add_report_definition_uses_display_report_type_condition():
   assert kwargs["base_account_id"] == "999"
 
 
+def test_remove_report_definition_removes_reports():
+  client = mock.Mock()
+  client.request.return_value = {"ok": True}
+
+  with mock.patch("yahoo_ads_mcp.tools.reports.YahooAdsClient", return_value=client):
+    reports.remove_report_definition(account_id=123, report_job_ids=[456])
+
+  client.request.assert_called_once_with(
+    api="search",
+    service="ReportDefinitionService",
+    method="remove",
+    payload={
+      "accountId": 123,
+      "operand": [{"accountId": 123, "reportJobId": 456}],
+    },
+    base_account_id=None,
+  )
+  client.close.assert_called_once()
+
+
 def test_get_report_fields_adds_lang_for_display_only():
   client = mock.Mock()
   client.request.return_value = {"ok": True}

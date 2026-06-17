@@ -14,12 +14,13 @@ def call_yahoo_ads_api(
   payload: dict[str, Any] | None = None,
   base_account_id: str | None = None,
 ) -> dict[str, Any] | list[Any] | str | None:
-  """Calls any Yahoo Ads API service method.
+  """Calls an allowed Yahoo Ads API service method.
 
   Args:
       api: API family. Use "search" or "display".
       service: Service name such as "CampaignService".
-      method: Method name such as "get", "add", "set", or "remove".
+      method: Method name. get* and download methods are allowed.
+        ReportDefinitionService add/remove are also allowed.
       payload: Request body following the official OpenAPI schema.
       base_account_id: Optional x-z-base-account-id header value.
   """

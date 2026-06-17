@@ -106,6 +106,177 @@ def test_request_refreshes_token_and_calls_search_api():
   assert api_request.read() == b'{"accountId":123}'
 
 
+def test_request_rejects_write_methods_before_http_call():
+  def handler(_request: httpx.Request) -> httpx.Response:
+    raise AssertionError("HTTP request should not be sent for write methods")
+
+  transport = httpx.MockTransport(handler)
+  client = YahooAdsClient(
+    config(access_token="access"),
+    http_client=httpx.Client(transport=transport),
+  )
+
+  with pytest.raises(ToolError, match="Only get/download methods"):
+    client.request(
+      api="search",
+      service="CampaignService",
+      method="set",
+      payload={"accountId": 123},
+    )
+
+
+def test_request_rejects_path_traversal_methods_before_http_call():
+  def handler(_request: httpx.Request) -> httpx.Response:
+    raise AssertionError("HTTP request should not be sent for invalid methods")
+
+  transport = httpx.MockTransport(handler)
+  client = YahooAdsClient(
+    config(access_token="access"),
+    http_client=httpx.Client(transport=transport),
+  )
+
+  with pytest.raises(ToolError, match="Invalid Yahoo Ads API method"):
+    client.request(
+      api="search",
+      service="CampaignService",
+      method="get/../set",
+      payload={"accountId": 123},
+    )
+
+
+def test_request_rejects_invalid_service_before_http_call():
+  def handler(_request: httpx.Request) -> httpx.Response:
+    raise AssertionError("HTTP request should not be sent for invalid services")
+
+  transport = httpx.MockTransport(handler)
+  client = YahooAdsClient(
+    config(access_token="access"),
+    http_client=httpx.Client(transport=transport),
+  )
+
+  with pytest.raises(ToolError, match="Invalid Yahoo Ads API service"):
+    client.request(
+      api="search",
+      service="CampaignService/../AdGroupService",
+      method="get",
+      payload={"accountId": 123},
+    )
+
+
+def test_request_allows_get_prefixed_methods():
+  requests = []
+
+  def handler(request: httpx.Request) -> httpx.Response:
+    requests.append(request)
+    return httpx.Response(
+      200,
+      json={"ok": True},
+      headers={"content-type": "application/json"},
+    )
+
+  transport = httpx.MockTransport(handler)
+  client = YahooAdsClient(
+    config(access_token="access"),
+    http_client=httpx.Client(transport=transport),
+  )
+
+  result = client.request(
+    api="display",
+    service="ReportDefinitionService",
+    method="getReportFields",
+    payload={"reportType": "AD"},
+  )
+
+  assert result == {"ok": True}
+  assert str(requests[0].url) == (
+    "https://display.example.test/api/v19/ReportDefinitionService/getReportFields"
+  )
+
+
+def test_request_allows_report_definition_write_methods():
+  requests = []
+
+  def handler(request: httpx.Request) -> httpx.Response:
+    requests.append(request)
+    return httpx.Response(
+      200,
+      json={"ok": True},
+      headers={"content-type": "application/json"},
+    )
+
+  transport = httpx.MockTransport(handler)
+  client = YahooAdsClient(
+    config(access_token="access"),
+    http_client=httpx.Client(transport=transport),
+  )
+
+  result = client.request(
+    api="search",
+    service="ReportDefinitionService",
+    method="add",
+    payload={"accountId": 123, "operand": []},
+  )
+
+  assert result == {"ok": True}
+  assert str(requests[0].url) == (
+    "https://search.example.test/api/v19/ReportDefinitionService/add"
+  )
+
+
+def test_request_allows_download_methods():
+  requests = []
+
+  def handler(request: httpx.Request) -> httpx.Response:
+    requests.append(request)
+    return httpx.Response(200, content=b"csv,data")
+
+  transport = httpx.MockTransport(handler)
+  client = YahooAdsClient(
+    config(access_token="access"),
+    http_client=httpx.Client(transport=transport),
+  )
+
+  result = client.request(
+    api="search",
+    service="AuditLogService",
+    method="download",
+    payload={"accountId": 123, "auditLogJobId": 456},
+  )
+
+  assert result == "csv,data"
+  assert str(requests[0].url) == (
+    "https://search.example.test/api/v19/AuditLogService/download"
+  )
+
+
+def test_request_returns_binary_download_as_base64():
+  def handler(_request: httpx.Request) -> httpx.Response:
+    return httpx.Response(
+      200,
+      content=b"\x1f\x8b\x08\x00",
+      headers={"content-type": "application/octet-stream"},
+    )
+
+  transport = httpx.MockTransport(handler)
+  client = YahooAdsClient(
+    config(access_token="access"),
+    http_client=httpx.Client(transport=transport),
+  )
+
+  result = client.request(
+    api="search",
+    service="ReportDefinitionService",
+    method="download",
+    payload={"accountId": 123, "reportJobId": 456},
+  )
+
+  assert result == {
+    "contentBase64": "H4sIAA==",
+    "contentType": "application/octet-stream",
+    "encoding": "base64",
+  }
+
+
 def test_request_raises_tool_error_for_http_errors():
   transport = httpx.MockTransport(
     lambda _request: httpx.Response(

@@ -10,11 +10,16 @@ LY/Yahoo! JAPAN Ads API を MCP から扱うためのサーバーです。
 - Search Ads API / Display Ads API v19
 - OAuth2 refresh token から access token を取得
 - BaseAccountService/get によるアクセス可能アカウント取得
-- Search Ads / Display Ads の任意サービスメソッド呼び出し
+- Search Ads / Display Ads の読み取り系サービスメソッド呼び出し
 - CampaignService/get, AdGroupService/get, AdGroupAdService/get のショートカット
-- ReportDefinitionService の get/add/remove/getReportFields
+- ReportDefinitionService の get/add/download/remove/getReportFields
 
 Yahoo公式ドキュメントでは、2026-06-17 時点で v19 が最新です。
+
+この MCP サーバーは、広告配信設定の変更を拒否します。
+Yahoo広告 API の `add` / `set` / `remove` などのうち、広告・キャンペーン・広告グループなどを直接変更するメソッドは実行できません。
+`download` は取得系メソッドとして許可します。
+例外として、レポート生成に必要な `ReportDefinitionService` の `add` / `remove` は許可します。
 
 ## セットアップ
 
@@ -132,6 +137,11 @@ MCP クライアント設定例:
 - `get_report_fields`
 
 ## 任意サービス呼び出し例
+
+`call_yahoo_ads_api` は広告配信設定を変更するメソッドを拒否します。
+`method` には `get` や `getReportFields` のように `get` で始まるメソッド、または `download` を指定できます。
+例外として、`service` が `ReportDefinitionService` の場合のみ `add` / `remove` も指定できます。
+`application/octet-stream` などのバイナリ download 応答は、`contentBase64` / `contentType` / `encoding` を含む JSON として返します。
 
 ```json
 {

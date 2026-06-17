@@ -1,5 +1,7 @@
 """HTTP client for LY/Yahoo! JAPAN Ads API."""
 
+import base64
+import re
 from collections.abc import Mapping
 from typing import Any, Literal
 from urllib.parse import urlencode
@@ -10,6 +12,7 @@ from fastmcp.exceptions import ToolError
 from yahoo_ads_mcp.config import YahooAdsConfig, get_config
 
 ApiType = Literal["search", "display"]
+PATH_COMPONENT_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9]*$")
 
 
 class YahooAdsClient:
@@ -85,6 +88,8 @@ class YahooAdsClient:
     access_token: str | None = None,
   ) -> dict[str, Any] | list[Any] | str | None:
     """Calls a Yahoo Ads service method."""
+    _require_allowed_method(service=service, method=method)
+
     token = access_token or self.config.access_token
     if not token:
       token = self.refresh_access_token()["access_token"]
@@ -113,6 +118,9 @@ class YahooAdsClient:
     return parsed
 
   def _service_url(self, *, api: ApiType, service: str, method: str) -> str:
+    _require_safe_path_component("service", service)
+    _require_safe_path_component("method", method)
+
     if api == "search":
       base = self.config.search_base_url
     elif api == "display":
@@ -145,6 +153,12 @@ class YahooAdsClient:
     content_type = response.headers.get("content-type", "")
     if "application/json" in content_type:
       return response.json()
+    if _is_binary_response(content_type):
+      return {
+        "contentBase64": base64.b64encode(response.content).decode("ascii"),
+        "contentType": content_type,
+        "encoding": "base64",
+      }
     return response.text
 
 
@@ -154,3 +168,40 @@ def _error_detail(response: httpx.Response) -> str:
   except ValueError:
     body = response.text
   return f"Yahoo Ads API request failed: HTTP {response.status_code}: {body}"
+
+
+def _require_allowed_method(*, service: str, method: str) -> None:
+  _require_safe_path_component("service", service)
+  _require_safe_path_component("method", method)
+
+  normalized_method = method.lower()
+  if normalized_method.startswith("get"):
+    return
+  if normalized_method == "download":
+    return
+  if service == "ReportDefinitionService" and normalized_method in {
+    "add",
+    "remove",
+  }:
+    return
+  raise ToolError(
+    "Only get/download methods and ReportDefinitionService add/remove are "
+    "allowed in this MCP server. "
+    f"Rejected Yahoo Ads API method: {service}/{method}"
+  )
+
+
+def _require_safe_path_component(name: str, value: str) -> None:
+  if not PATH_COMPONENT_PATTERN.fullmatch(value):
+    raise ToolError(f"Invalid Yahoo Ads API {name}: {value}")
+
+
+def _is_binary_response(content_type: str) -> bool:
+  media_type = content_type.split(";", maxsplit=1)[0].strip().lower()
+  if not media_type:
+    return False
+  return not (
+    media_type.startswith("text/")
+    or media_type.endswith("+json")
+    or media_type in {"application/json", "application/xml", "application/csv"}
+  )
