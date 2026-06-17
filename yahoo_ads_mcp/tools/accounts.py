@@ -5,14 +5,28 @@ from typing import Any, Literal
 from yahoo_ads_mcp.client import YahooAdsClient
 from yahoo_ads_mcp.coordinator import mcp_server as mcp
 
+IncludeMccAccount = Literal[
+  "ONLY_MCC",
+  "ONLY_ROOT_MCC",
+  "ONLY_ADS_ACCOUNT",
+  "ALL",
+  "UNKNOWN",
+]
+IncludeTestAccount = Literal[
+  "ONLY_TEST",
+  "EXCLUDE_TEST",
+  "ALL",
+  "UNKNOWN",
+]
+
 
 @mcp.tool()
 def list_base_accounts(
   api: Literal["search", "display"] = "search",
   account_ids: list[int] | None = None,
   account_name: str | None = None,
-  include_mcc_account: str | None = "TRUE",
-  include_test_account: str | None = None,
+  include_mcc_account: IncludeMccAccount | None = "ALL",
+  include_test_account: IncludeTestAccount | None = "EXCLUDE_TEST",
   start_index: int = 1,
   number_results: int = 200,
 ) -> dict[str, Any] | list[Any] | str | None:
@@ -22,8 +36,8 @@ def list_base_accounts(
       api: API family. Use "search" for Search Ads or "display" for Display Ads.
       account_ids: Optional account IDs to filter.
       account_name: Optional account name filter.
-      include_mcc_account: Optional API enum value, usually "TRUE" or "FALSE".
-      include_test_account: Optional API enum value, usually "TRUE" or "FALSE".
+      include_mcc_account: Optional API enum value. Defaults to "ALL".
+      include_test_account: Optional API enum value. Defaults to "EXCLUDE_TEST".
       start_index: Result start index.
       number_results: Number of results to retrieve.
   """
