@@ -22,7 +22,7 @@ Yahoo公式ドキュメントでは、2026-06-17 時点で v19 が最新です�
 uv sync
 ```
 
-`.env` か環境変数に以下を設定してください。
+`.env`、環境変数、または `~/yahoo-ads.yaml` に以下を設定してください。
 
 ```bash
 YAHOO_ADS_CLIENT_ID=...
@@ -34,6 +34,23 @@ YAHOO_ADS_API_VERSION=v19
 
 # 任意。多くのサービスでは base account が必要です。
 YAHOO_ADS_BASE_ACCOUNT_ID=...
+```
+
+YAML で管理する場合は、デフォルトで `~/yahoo-ads.yaml` を読みます。
+別パスを使う場合は `YAHOO_ADS_CONFIG_PATH` を指定してください。
+OS の環境変数が設定されている場合は YAML より優先されます。
+
+```yaml
+yahoo_ads:
+  YAHOO_ADS_CLIENT_ID: "..."
+  YAHOO_ADS_CLIENT_SECRET: "..."
+  YAHOO_ADS_REFRESH_TOKEN: "..."
+
+  # 任意。未指定時は v19
+  YAHOO_ADS_API_VERSION: "v19"
+
+  # 任意。多くのサービスでは base account が必要です。
+  YAHOO_ADS_BASE_ACCOUNT_ID: "..."
 ```
 
 ## 起動
